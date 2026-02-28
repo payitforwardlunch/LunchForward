@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id           String     @id @default(cuid())
+  name         String
+  slug         String     @unique
+  location     String
+  description  String?
+  username     String?    @unique
+  password     String?
+  targetAmount Float      @default(1000)
+  raisedAmount Float      @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  donations    Donation[]
+}
+
+model Donation {
+  id        String   @id @default(cuid())
+  amount    Float
+  frequency String   @default("one-time")
+  schoolId  String
+  donorName String?
+  createdAt DateTime @default(now())
+  school    School   @relation(fields: [schoolId], references: [id])
+}

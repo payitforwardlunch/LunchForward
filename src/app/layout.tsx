@@ -29,7 +29,7 @@ export default function RootLayout({
         <footer>
           <div className="container">
             <p>&copy; 2026 LunchForward. All rights reserved.</p>
-            <p><a href="/#privacy">Privacy</a> • <a href="mailto:hello@lunchforward.net">Contact</a> • <a href="/dashboard/providence">School Dashboard (Sample)</a></p>
+            <p><a href="/#privacy">Privacy</a> • <a href="mailto:hello@lunchforward.net">Contact</a> • <a href="/dashboard">School Portal</a></p>
           </div>
         </footer>
       </body>
