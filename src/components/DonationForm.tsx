@@ -11,7 +11,11 @@ interface School {
     raisedAmount: number;
 }
 
-export default function DonationForm({ school }: { school: School }) {
+function pluralizeLunch(count: number) {
+    return count === 1 ? 'lunch' : 'lunches';
+}
+
+export default function DonationForm({ school }: { school: School; mealsFunded?: number; goalMeals?: number }) {
     const [donationType, setDonationType] = useState<'one-time' | 'monthly'>('monthly');
     const [selectedAmount, setSelectedAmount] = useState<number>(20); // Default 20 meals
     const mealCost = 3.50;
@@ -30,7 +34,16 @@ export default function DonationForm({ school }: { school: School }) {
         { amount: 100 },
     ];
 
-    const progressPercent = Math.min(Math.round((school.raisedAmount / school.targetAmount) * 100), 100);
+    const totalRaised = Number.isFinite(school.raisedAmount) ? school.raisedAmount : 0;
+    const goalAmount = Number.isFinite(school.targetAmount) ? school.targetAmount : 0;
+    const mealsFunded = Math.floor(totalRaised / mealCost);
+    const goalMeals = Math.ceil(goalAmount / mealCost);
+    const mealsRemaining = Math.max(0, goalMeals - mealsFunded);
+    const progressPercent = goalAmount > 0 ? Math.min(100, Math.round((totalRaised / goalAmount) * 100)) : 0;
+
+    // Derive display values for CTA
+    const ctaMeals = donationType === 'monthly' ? selectedAmount : Math.floor(selectedAmount / mealCost);
+    const ctaAmount = donationType === 'monthly' ? (selectedAmount * mealCost).toFixed(2) : selectedAmount;
 
     return (
         <div style={{ padding: "var(--spacing-md) var(--spacing-md) var(--spacing-lg)" }}>
@@ -38,14 +51,62 @@ export default function DonationForm({ school }: { school: School }) {
             <div style={{ marginBottom: "2.5rem", padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', alignItems: 'baseline' }}>
                     <div>
-                        <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary-color)' }}>${school.raisedAmount.toLocaleString()}</span>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginLeft: '0.375rem' }}>raised of ${school.targetAmount.toLocaleString()} goal</span>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 0, marginBottom: 0 }}>
+                            {mealsFunded.toLocaleString()} of {goalMeals.toLocaleString()} lunches
+                        </p>
                     </div>
                     <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-color)' }}>{progressPercent}%</span>
                 </div>
                 <div style={{ backgroundColor: '#e5e7eb', borderRadius: '999px', height: '12px', width: '100%', overflow: 'hidden' }}>
                     <div style={{ backgroundColor: 'var(--primary-color)', height: '100%', width: `${progressPercent}%`, borderRadius: '999px', transition: 'width 1s ease-in-out' }}></div>
                 </div>
+                <p style={{
+                    fontSize: '0.8125rem', color: '#059669', fontWeight: 600,
+                    marginTop: '0.75rem', marginBottom: 0, textAlign: 'center'
+                }}>
+                    {mealsFunded === 0
+                        ? `${goalMeals.toLocaleString()} ${pluralizeLunch(goalMeals)} still needed`
+                        : mealsRemaining > 0
+                            ? `${mealsRemaining.toLocaleString()} ${pluralizeLunch(mealsRemaining)} still needed • Goal: ${goalMeals.toLocaleString()}`
+                            : 'Goal reached — thank you!'
+                    }
+                </p>
+                <p style={{
+                    fontSize: '0.75rem', color: 'var(--text-muted)',
+                    marginTop: '0.25rem', marginBottom: 0, textAlign: 'center'
+                }}>
+                    Each lunch costs $3.50.
+                </p>
+            </div>
+
+            {/* 7) SOCIAL PROOF */}
+            <div style={{
+                textAlign: 'center', marginBottom: '1.5rem', padding: '0.75rem',
+                backgroundColor: '#fffbeb', borderRadius: '10px', border: '1px solid #fde68a'
+            }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#92400e', margin: 0 }}>
+                    💛 Be one of the first supporters this month.
+                </p>
+            </div>
+
+            {/* 3) WHY THIS MATTERS */}
+            <div style={{
+                marginBottom: '2rem', padding: '1.25rem 1.5rem',
+                backgroundColor: '#fefce8', borderRadius: '12px',
+                border: '1px solid #fef08a', textAlign: 'center'
+            }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#854d0e', marginBottom: '0.5rem' }}>
+                    Why this matters
+                </h3>
+                <p style={{
+                    fontSize: '0.875rem', color: '#713f12', lineHeight: 1.6,
+                    marginBottom: '0.5rem', maxWidth: '450px', margin: '0 auto 0.5rem auto'
+                }}>
+                    For some students, school lunch may be the only warm meal they receive that day. Your support helps students stay focused and feel included with their friends.
+                </p>
+                <p style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#854d0e', margin: 0 }}>
+                    Even one lunch makes a difference.
+                </p>
             </div>
 
             <h2 style={{ textAlign: 'center', fontSize: '1.5rem', marginBottom: '1.5rem' }}>Choose your impact</h2>
@@ -81,8 +142,12 @@ export default function DonationForm({ school }: { school: School }) {
             {/* Monthly Options Grid */}
             {donationType === 'monthly' ? (
                 <div>
-                    <p style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                        A meal costs exactly <strong>${mealCost.toFixed(2)}</strong>. How many students do you want to feed each month?
+                    {/* 4) UPGRADED HELPER TEXT */}
+                    <p style={{ textAlign: 'center', marginBottom: '0.25rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                        Just <strong>${mealCost.toFixed(2)}</strong> provides one student with a healthy school lunch.
+                    </p>
+                    <p style={{ textAlign: 'center', marginBottom: '1rem', color: '#6b7280', fontSize: '0.8125rem', fontStyle: 'italic' }}>
+                        Pick a monthly amount to reliably cover lunches all month.
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                         {monthlyOptions.map(opt => (
@@ -155,7 +220,7 @@ export default function DonationForm({ school }: { school: School }) {
                 </div>
             )}
 
-            {/* Checkout Button */}
+            {/* 5) CTA BUTTON WITH DYNAMIC COPY */}
             <button
                 className="btn"
                 style={{
@@ -165,8 +230,8 @@ export default function DonationForm({ school }: { school: School }) {
                 onClick={() => alert(`Redirecting to Stripe Checkout for ${donationType === 'monthly' ? '$' + (selectedAmount * mealCost).toFixed(2) + '/mo' : '$' + selectedAmount} ...`)}
             >
                 {donationType === 'monthly'
-                    ? `Subscribe Monthly — $${(selectedAmount * mealCost).toFixed(2)}`
-                    : `Donate $${selectedAmount} Once`
+                    ? `Feed ${selectedAmount} students every month — $${(selectedAmount * mealCost).toFixed(2)}`
+                    : `Give ${ctaMeals} lunches today — $${ctaAmount}`
                 }
             </button>
 
