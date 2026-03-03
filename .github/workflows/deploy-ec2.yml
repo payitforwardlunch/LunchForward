@@ -1,0 +1,27 @@
+name: Deploy LunchForward to EC2
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd /var/www/LunchForward
+            sudo -u ubuntu git pull origin main
+            sudo -u ubuntu npm ci
+            sudo -u ubuntu npm run build
+
+            # restart Next.js (temporary approach until systemd is set up)
+            sudo fuser -k 3000/tcp || true
+            sudo -u ubuntu nohup npm run start -- -p 3000 >/var/log/lunchforward.log 2>&1 &
+            echo "Deploy complete"
